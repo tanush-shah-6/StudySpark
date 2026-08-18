@@ -1,7 +1,9 @@
 import React from 'react';
 import './Features.css';
-import Carousel from 'react-multi-carousel';
+import _Carousel from 'react-multi-carousel';
 import 'react-multi-carousel/lib/styles.css';
+
+const Carousel = _Carousel.default || _Carousel;
 
 const carouselItems = [
     { id: 1, src: '/images/quiz.png', label: 'Quizzes' },

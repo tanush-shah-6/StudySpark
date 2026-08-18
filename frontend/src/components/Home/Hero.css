@@ -1,8 +1,8 @@
 .hero {
   display: flex;
   align-items: center;
-  background: url('/public/images/bg_hero.jpg') center/cover;
-  height: 100vh;
+  background: url('/images/bg_hero.jpg') center/cover;
+  min-height: 80vh;
   color: white;
   position: relative;
   text-align: center;
