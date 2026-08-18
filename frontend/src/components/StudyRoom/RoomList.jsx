@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 import './RoomList.css';
 
 const RoomList = () => {
@@ -19,7 +20,7 @@ const RoomList = () => {
         }
 
         try {
-            const response = await axios.get('http://localhost:5000/api/studyrooms/joined', {
+            const response = await axios.get(`${API_BASE_URL}/api/studyrooms/joined`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -56,7 +57,7 @@ const RoomList = () => {
 
         try {
             const response = await axios.patch(
-                `http://localhost:5000/api/studyrooms/${roomId}/edit-topic`,
+                `${API_BASE_URL}/api/studyrooms/${roomId}/edit-topic`,
                 { topic: editTopicValue },
                 {
                     headers: {
@@ -85,7 +86,7 @@ const RoomList = () => {
         if (!window.confirm('Are you sure you want to delete this room?')) return;
 
         try {
-            await axios.delete(`http://localhost:5000/api/studyrooms/${roomId}`, {
+            await axios.delete(`${API_BASE_URL}/api/studyrooms/${roomId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

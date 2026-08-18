@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Flashcards.css';
 import { FaArrowLeft, FaArrowRight, FaSync, FaLightbulb } from 'react-icons/fa';
+import { API_BASE_URL } from '../config';
 
 const Flashcards = () => {
     const [flashcardData, setFlashcardData] = useState([]);
@@ -48,7 +49,7 @@ const Flashcards = () => {
         }, 500);
 
         try {
-            const response = await fetch('http://localhost:5000/api/generate-flashcard', {
+            const response = await fetch(`${API_BASE_URL}/api/generate-flashcard`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

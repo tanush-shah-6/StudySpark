@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 import './ChatRoom.css';
 
 const ChatRoom = () => {
@@ -22,14 +23,14 @@ const ChatRoom = () => {
     }
 
     // Initialize socket connection with auth token
-    socketRef.current = io('http://localhost:5000', {
+    socketRef.current = io(API_BASE_URL, {
       auth: { token }
     });
 
     // Get current user info
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/user/profile', {
+        const response = await axios.get(`${API_BASE_URL}/api/user/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setCurrentUser(response.data.user);
@@ -42,7 +43,7 @@ const ChatRoom = () => {
     // Fetch existing messages
     const fetchMessages = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/studyrooms/${roomId}/messages`, {
+        const response = await axios.get(`${API_BASE_URL}/api/studyrooms/${roomId}/messages`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMessages(response.data || []);
@@ -102,7 +103,7 @@ const ChatRoom = () => {
     } else {
       // Fallback to REST API if socket is temporarily disconnected
       axios.post(
-        `http://localhost:5000/api/studyrooms/${roomId}/sendMessage`,
+        `${API_BASE_URL}/api/studyrooms/${roomId}/sendMessage`,
         { text: newMessage.trim() },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       ).catch(err => console.error('Error sending message fallback:', err));

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config';
 import './Quiz.css';
 
 const Quiz = () => {
@@ -44,7 +45,7 @@ const Quiz = () => {
                 });
             }, 1000);
 
-            const response = await fetch('http://localhost:5000/api/generate-quiz', {
+            const response = await fetch(`${API_BASE_URL}/api/generate-quiz`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

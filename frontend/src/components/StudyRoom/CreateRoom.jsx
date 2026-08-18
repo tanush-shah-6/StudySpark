@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import './CreateRoom.css';
 
 const CreateRoom = ({ onRoomCreated }) => {
@@ -25,7 +26,7 @@ const CreateRoom = ({ onRoomCreated }) => {
 
         try {
             const { data } = await axios.post(
-                'http://localhost:5000/api/studyrooms/create',
+                `${API_BASE_URL}/api/studyrooms/create`,
                 { name: roomName, topic },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

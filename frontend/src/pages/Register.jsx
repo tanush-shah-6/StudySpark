@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_BASE_URL } from '../config';
 import './Auth.css';
 
 const Register = () => {
@@ -22,7 +23,7 @@ const Register = () => {
         setError('');
 
         try {
-            await axios.post('http://localhost:5000/register', { username, password });
+            await axios.post(`${API_BASE_URL}/register`, { username, password });
             setSuccessMessage('Registration successful! Redirecting to login...'); 
             
             setTimeout(() => {

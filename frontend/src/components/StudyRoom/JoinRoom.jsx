@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import './JoinRoom.css';
 
 const JoinRoom = ({ onRoomJoined }) => {
@@ -19,7 +20,7 @@ const JoinRoom = ({ onRoomJoined }) => {
         }
 
         try {
-            const response = await axios.get('http://localhost:5000/api/studyrooms/available', {
+            const response = await axios.get(`${API_BASE_URL}/api/studyrooms/available`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setRooms(response.data || []);
@@ -46,7 +47,7 @@ const JoinRoom = ({ onRoomJoined }) => {
         setJoiningId(roomId);
         try {
             await axios.post(
-                `http://localhost:5000/api/studyrooms/${roomId}/join`,
+                `${API_BASE_URL}/api/studyrooms/${roomId}/join`,
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );
