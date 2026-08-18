@@ -9,6 +9,7 @@ const ChatRoom = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
@@ -31,8 +32,6 @@ const ChatRoom = () => {
         const response = await axios.get('http://localhost:5000/api/user/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
-        console.log('Current user data:', response.data);
         setCurrentUser(response.data.user);
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -40,31 +39,36 @@ const ChatRoom = () => {
       }
     };
 
-    fetchCurrentUser();
-
     // Fetch existing messages
     const fetchMessages = async () => {
       try {
         const response = await axios.get(`http://localhost:5000/api/studyrooms/${roomId}/messages`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
-        console.log('Fetched messages:', response.data);
-        setMessages(response.data);
+        setMessages(response.data || []);
       } catch (error) {
         console.error('Error fetching messages:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
+    fetchCurrentUser();
     fetchMessages();
 
-    // Join the room
+    // Join the room via socket
     socketRef.current.emit('joinRoom', { roomId });
 
-    // Listen for new messages
+    // Listen for incoming messages in real-time
     socketRef.current.on('newMessage', (message) => {
-      console.log('New message received:', message);
       setMessages(prevMessages => [...prevMessages, message]);
+    });
+
+    // Listen for loaded room messages
+    socketRef.current.on('loadMessages', (loadedMessages) => {
+      if (loadedMessages && loadedMessages.length > 0) {
+        setMessages(loadedMessages);
+      }
     });
 
     // Listen for errors
@@ -81,7 +85,6 @@ const ChatRoom = () => {
     };
   }, [roomId, navigate]);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -90,24 +93,22 @@ const ChatRoom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = async (e) => {
+  const handleSendMessage = (e) => {
     e.preventDefault();
-    
     if (!newMessage.trim()) return;
-    
-    try {
-      await axios.post(
+
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit('chatMessage', { roomId, message: newMessage.trim() });
+    } else {
+      // Fallback to REST API if socket is temporarily disconnected
+      axios.post(
         `http://localhost:5000/api/studyrooms/${roomId}/sendMessage`,
-        { text: newMessage },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }
-      );
-      
-      setNewMessage('');
-    } catch (error) {
-      console.error('Error sending message:', error);
+        { text: newMessage.trim() },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      ).catch(err => console.error('Error sending message fallback:', err));
     }
+    
+    setNewMessage('');
   };
 
   const handleKeyPress = (e) => {
@@ -121,39 +122,46 @@ const ChatRoom = () => {
     navigate('/studyrooms');
   };
 
-  // Function to determine if a message is from the current user
   const isCurrentUserMessage = (msg) => {
     if (!currentUser || !msg.sender) return false;
-    
     const senderId = msg.sender._id || msg.sender;
     const currentUserId = currentUser.id || currentUser._id;
-    
-    return senderId.toString() === currentUserId.toString();
+    return senderId?.toString() === currentUserId?.toString();
   };
 
   return (
-    <div className='container-chat'>
+    <div className="container-chat">
       <div className="chat-room">
-      <button className="back-button" onClick={goBack}>
-            &larr; Back to Study Rooms
-          </button>
+        <button className="back-button" onClick={goBack}>
+          &larr; Back to Study Rooms
+        </button>
         <div className="chat-header">
-          
-          <h2>Chat Room</h2>
+          <h2>Study Room Chat</h2>
         </div>
         
         <div className="messages">
-          {messages.map((msg, index) => (
-            <div 
-              key={index} 
-              className={`message ${isCurrentUserMessage(msg) ? 'sent' : 'received'}`}
-            >
-              <div className="message-info">
-                {isCurrentUserMessage(msg) ? 'You' : (msg.sender?.username || 'Unknown')}
+          {loading ? (
+            <p className="loading-chat-text">Loading conversation...</p>
+          ) : messages.length === 0 ? (
+            <p className="empty-chat-text">No messages yet. Start the conversation!</p>
+          ) : (
+            messages.map((msg, index) => (
+              <div 
+                key={msg._id || index} 
+                className={`message ${isCurrentUserMessage(msg) ? 'sent' : 'received'}`}
+              >
+                <div className="message-info">
+                  {isCurrentUserMessage(msg) ? 'You' : (msg.sender?.username || 'Learner')}
+                </div>
+                <div className="message-content">{msg.text}</div>
+                {msg.timestamp && (
+                  <div className="message-time">
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                )}
               </div>
-              <div className="message-content">{msg.text}</div>
-            </div>
-          ))}
+            ))
+          )}
           <div ref={messagesEndRef} />
         </div>
         
@@ -162,10 +170,10 @@ const ChatRoom = () => {
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             placeholder="Type a message..."
           />
-          <button type="submit">Send</button>
+          <button type="submit" disabled={!newMessage.trim()}>Send</button>
         </form>
       </div>
     </div>

@@ -1,67 +1,84 @@
+.join-room-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #464866;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 
-.join-title{
+.join-title {
   text-align: center;
-  font-size: 24px;
+  font-size: 1.5rem;
   margin-bottom: 20px;
   color: white;
 }
 
-.room-item {
-  background-color: #464866;
-  padding: 15px;
-  margin-bottom: 15px;
+.room-items-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.join-room-card {
+  background-color: #3b3d56;
+  padding: 18px 20px;
   border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.3s ease;
+  border: 1px solid #636688;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.room-item h3 {
-  font-size: 20px;
-  color: white ;
-  margin: 0 0 10px;
-}
-
-.room-item p {
-  font-size: 16px;
+.join-room-card h3 {
+  font-size: 1.25rem;
   color: white;
-  margin: 0 0 10px;
+  margin: 0;
 }
 
-button {
-  background-color: #007bff;
+.join-room-card p {
+  font-size: 0.95rem;
+  color: #e0e0e0;
+  margin: 0;
+}
+
+.join-btn {
+  align-self: flex-start;
+  margin-top: 6px;
+  background-color: #0080ff;
   color: #ffffff;
   border: none;
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 5px;
+  padding: 8px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-button:hover {
-  background-color: #0056b3;
+.join-btn:hover:not(:disabled) {
+  background-color: #005bb5;
+  transform: translateY(-1px);
 }
 
-button:focus {
-  outline: none;
+.join-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.error-message {
-  color: #d9534f;
+.join-loading, .no-rooms-text {
   text-align: center;
-  margin-top: 20px;
-  font-size: 18px;
+  color: white;
+  padding: 20px;
+  font-size: 1rem;
 }
 
-.loading-message {
+.join-error {
+  color: #ff6b6b;
   text-align: center;
-  margin-top: 20px;
-  font-size: 18px;
-  color: #777;
-}
-
-.no-rooms-message {
-  text-align: center;
-  font-size: 18px;
-  color: #777;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: rgba(255, 107, 107, 0.1);
+  border-radius: 4px;
 }

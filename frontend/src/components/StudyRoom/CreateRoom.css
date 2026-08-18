@@ -1,67 +1,89 @@
 .create-room-form {
-  max-width: 400px;
+  max-width: 460px;
   margin: 0 auto;
-  padding: 25px;
+  padding: 30px;
   border-radius: 8px;
-  background-color: #464866;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #3b3d56;
+  border: 1px solid #636688;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .create-room-form h2 {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   color: white;
   text-align: center;
   margin-bottom: 20px;
 }
 
 .create-room-form .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 18px;
 }
 
 .create-room-form label {
   display: block;
   font-weight: 600;
-  color: white;
-  margin-bottom: 10px;
+  color: #e0e0e0;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
 }
 
 .create-room-form input {
-  width: 90%;
-  padding: 10px;
+  width: 100%;
+  padding: 10px 12px;
   font-size: 1rem;
-  border: 1px solid #ccc;
+  border: 1px solid #636688;
   border-radius: 4px;
-  background-color: #fff;
-  transition: border-color 0.3s ease;
+  background-color: #2b2d42;
+  color: white;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.create-room-form input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .create-room-form input:focus {
-  border-color: #007bff;
+  border-color: #0080ff;
   outline: none;
 }
 
 .create-room-form button {
   width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  background-color: #007bff;
+  padding: 11px;
+  font-size: 1rem;
+  background-color: #0080ff;
   color: #fff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease, box-shadow 0.2s ease;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  margin-top: 10px;
 }
 
-.create-room-form button:hover {
-  background-color: #0056b3;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+.create-room-form button:hover:not(:disabled) {
+  background-color: #005bb5;
+  transform: translateY(-1px);
 }
 
-.success-message {
-  color: #28a745;
-  font-weight: bold;
-  font-size: 1rem;
+.create-room-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.create-room-form .success-message {
+  color: #2ecc71;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: center;
+  margin-top: 15px;
+}
+
+.create-room-form .error-message {
+  color: #ff6b6b;
+  font-weight: 600;
+  font-size: 0.95rem;
   text-align: center;
   margin-top: 15px;
 }

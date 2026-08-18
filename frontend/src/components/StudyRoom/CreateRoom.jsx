@@ -3,81 +3,89 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './CreateRoom.css';
 
-const CreateRoom = () => {
-  const [roomName, setRoomName] = useState('');
-  const [topic, setTopic] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const navigate = useNavigate();
+const CreateRoom = ({ onRoomCreated }) => {
+    const [roomName, setRoomName] = useState('');
+    const [topic, setTopic] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-  const handleCreateRoom = async (e) => {
-    e.preventDefault();
+    const handleCreateRoom = async (e) => {
+        e.preventDefault();
 
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      alert("You need to be logged in to create a room.");
-      return;
-    }
-
-    try {
-      const response = await axios.post(
-        'http://localhost:5000/api/studyrooms/create',
-        { name: roomName, topic: topic },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setError('You need to be logged in to create a room.');
+            return;
         }
-      );
 
-      setSuccessMessage("Room created successfully! Redirecting...");
+        setLoading(true);
+        setError('');
 
-      setRoomName('');
-      setTopic('');
+        try {
+            const { data } = await axios.post(
+                'http://localhost:5000/api/studyrooms/create',
+                { name: roomName, topic },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
 
-      setTimeout(() => {
-        navigate('/room-list');  
-      }, 1500); 
+            setSuccessMessage('Room created successfully! Redirecting...');
+            setRoomName('');
+            setTopic('');
 
-    } catch (err) {
-      console.error('Error creating room:', err);
-      alert('Error creating the room');
-    }
-  };
+            setTimeout(() => {
+                if (onRoomCreated) {
+                    onRoomCreated();
+                } else {
+                    navigate('/studyrooms');
+                }
+            }, 1000);
+        } catch (err) {
+            setError(err.response?.data?.error || 'Error creating the room. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div className="create-room-form">
-      <h2>Create Study Room</h2>
-      <form onSubmit={handleCreateRoom}>
-        <div className="form-group">
-          <label htmlFor="roomName">Room Name</label>
-          <input
-            type="text"
-            id="roomName"
-            placeholder="Enter Room Name"
-            value={roomName}
-            onChange={(e) => setRoomName(e.target.value)}
-            required
-          />
+    return (
+        <div className="create-room-form">
+            <h2>Create Study Room</h2>
+            <form onSubmit={handleCreateRoom}>
+                <div className="form-group">
+                    <label htmlFor="roomName">Room Name</label>
+                    <input
+                        type="text"
+                        id="roomName"
+                        placeholder="Enter Room Name"
+                        value={roomName}
+                        onChange={(e) => setRoomName(e.target.value)}
+                        required
+                        disabled={loading}
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="topic">Topic</label>
+                    <input
+                        type="text"
+                        id="topic"
+                        placeholder="Enter Topic"
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        disabled={loading}
+                    />
+                </div>
+
+                <button type="submit" disabled={loading || !roomName}>
+                    {loading ? 'Creating...' : 'Create Room'}
+                </button>
+
+                {successMessage && <p className="success-message">{successMessage}</p>}
+                {error && <p className="error-message">{error}</p>}
+            </form>
         </div>
-        
-        <div className="form-group">
-          <label htmlFor="topic">Topic</label>
-          <input
-            type="text"
-            id="topic"
-            placeholder="Enter Topic"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-          />
-        </div>
-
-        <button type="submit">Create Room</button>
-
-        {successMessage && <p className="success-message">{successMessage}</p>}
-      </form>
-    </div>
-  );
+    );
 };
 
 export default CreateRoom;

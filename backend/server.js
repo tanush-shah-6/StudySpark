@@ -7,9 +7,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 const User = require('./models/User');
 const StudyRoom = require('./models/StudyRoom');
-const Flashcard = require('./models/Flashcard');
-const QuizQuestion = require('./models/Quiz');
 const studyRoomSocket = require('./sockets/studyRoomSocket');
+const authenticate = require('./middleware/authenticate');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
@@ -24,39 +23,29 @@ const studyRoomRoutes = require('./routes/studyRoomRoutes')(io);
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log("MongoDB connected"))
-    .catch((err) => console.error("MongoDB connection error:", err));
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB connected'))
+    .catch((err) => console.error('MongoDB connection error:', err));
 
 if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is not defined in the .env file");
+    throw new Error('GEMINI_API_KEY is not defined in the .env file');
 }
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
 
 function extractJsonFromResponse(str) {
     try {
-        // Try to extract JSON array from the response
         const jsonRegex = /\[\s*{[\s\S]*}\s*\]/;
         const match = str.match(jsonRegex);
-        
-        if (match) {
-            return match[0];
-        }
-        
-        // If no JSON array found, remove markdown code blocks
-        let cleanedStr = str.replace(/``````/g, '').trim();
-        
-        // Handle newlines within strings
+        if (match) return match[0];
+
+        let cleanedStr = str.replace(/```(json)?/g, '').trim();
         cleanedStr = cleanedStr.replace(/\n(?=(?:[^"]*"[^"]*")*[^"]*$)/g, ' ');
-        
-        // Remove trailing commas
-        cleanedStr = cleanedStr.replace(/,\s*([}\]])/g, "$1");
-        
+        cleanedStr = cleanedStr.replace(/,\s*([}\]])/g, '$1');
         return cleanedStr;
     } catch (error) {
-        console.error("Error extracting JSON:", error);
-        return str; // Return original string if extraction fails
+        console.error('Error extracting JSON:', error);
+        return str;
     }
 }
 
@@ -70,40 +59,26 @@ async function generateFlashcardQuestions(topic, numQuestions) {
     try {
         const result = await model.generateContent(prompt);
         const responseText = await result.response.text();
-        
-        // Log the raw response for debugging
-        console.log("Raw flashcard response:", responseText);
-        
-        // Extract and clean JSON from the response
+
         const extractedJson = extractJsonFromResponse(responseText);
-        console.log("Extracted JSON:", extractedJson);
-        
-        // Parse the JSON
+
         let flashcardData;
         try {
             flashcardData = JSON.parse(extractedJson);
-            
-            // Ensure we have an array
-            if (!Array.isArray(flashcardData)) {
-                flashcardData = [flashcardData];
-            }
+            if (!Array.isArray(flashcardData)) flashcardData = [flashcardData];
         } catch (parseError) {
-            console.error("JSON parsing error:", parseError);
-            throw new Error("Failed to parse the generated flashcard data");
+            console.error('JSON parsing error:', parseError);
+            throw new Error('Failed to parse the generated flashcard data');
         }
 
-        const flashcards = await Promise.all(flashcardData.map(async (card) => {
-            const newFlashcard = new Flashcard({
-                topic,
-                question: card.question,
-                answer: card.answer,
-            });
-            return newFlashcard.save();
+        // Return the parsed flashcards in-memory without saving to MongoDB
+        return flashcardData.map((card) => ({
+            topic,
+            question: card.question,
+            answer: card.answer,
         }));
-
-        return flashcards; 
     } catch (error) {
-        console.error("Error generating flashcards with Google Generative AI:", error);
+        console.error('Error generating flashcards:', error);
         throw error;
     }
 }
@@ -119,93 +94,79 @@ async function generateQuizQuestions(topic, numQuestions) {
     try {
         const result = await model.generateContent(prompt);
         const responseText = await result.response.text();
-        
-        // Log the raw response for debugging
-        console.log("Raw quiz response:", responseText);
-        
-        // Extract and clean JSON from the response
+
         const extractedJson = extractJsonFromResponse(responseText);
-        console.log("Extracted JSON:", extractedJson);
-        
-        // Parse the JSON
+
         let quizData;
         try {
             quizData = JSON.parse(extractedJson);
-            
-            // Ensure we have an array
-            if (!Array.isArray(quizData)) {
-                quizData = [quizData];
-            }
+            if (!Array.isArray(quizData)) quizData = [quizData];
         } catch (parseError) {
-            console.error("JSON parsing error:", parseError);
-            throw new Error("Failed to parse the generated quiz data");
+            console.error('JSON parsing error:', parseError);
+            throw new Error('Failed to parse the generated quiz data');
         }
 
-        const quizQuestions = await Promise.all(quizData.map(async (question) => {
-            const newQuizQuestion = new QuizQuestion({
-                topic,
-                question: question.question,
-                options: question.options,
-                answer: question.answer,
-            });
-            return newQuizQuestion.save();
+        // Return the parsed quiz questions in-memory without saving to MongoDB
+        return quizData.map((question) => ({
+            topic,
+            question: question.question,
+            options: question.options,
+            answer: question.answer,
         }));
-
-        return quizQuestions; 
     } catch (error) {
-        console.error("Error generating quiz with Google Generative AI:", error);
+        console.error('Error generating quiz:', error);
         throw error;
     }
 }
 
-app.post('/api/generate-flashcard', async (req, res) => {
+// AI generation routes - protected with authenticate middleware
+app.post('/api/generate-flashcard', authenticate, async (req, res) => {
     const { topic, numQuestions } = req.body;
 
     if (!topic || !numQuestions) {
-        return res.status(400).json({ error: "Topic and number of questions are required." });
+        return res.status(400).json({ error: 'Topic and number of questions are required.' });
     }
 
     try {
         const flashcardQuestions = await generateFlashcardQuestions(topic, numQuestions);
         res.status(200).json({ flashcards: flashcardQuestions });
     } catch (error) {
-        console.error("Flashcard generation error:", error);
-        res.status(500).json({ error: "Failed to generate flashcards.", details: error.message });
+        console.error('Flashcard generation error:', error);
+        res.status(500).json({ error: 'Failed to generate flashcards.', details: error.message });
     }
 });
 
-app.post('/api/generate-quiz', async (req, res) => {
+app.post('/api/generate-quiz', authenticate, async (req, res) => {
     const { topic, numQuestions } = req.body;
 
     if (!topic || !numQuestions) {
-        return res.status(400).json({ error: "Topic and number of questions are required." });
+        return res.status(400).json({ error: 'Topic and number of questions are required.' });
     }
 
     try {
         const quizQuestions = await generateQuizQuestions(topic, numQuestions);
         res.status(200).json({ quiz: quizQuestions });
     } catch (error) {
-        console.error("Quiz generation error:", error);
-        res.status(500).json({ error: "Failed to generate quiz.", details: error.message });
+        console.error('Quiz generation error:', error);
+        res.status(500).json({ error: 'Failed to generate quiz.', details: error.message });
     }
 });
 
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     try {
-        // Check if user already exists
         const existingUser = await User.findOne({ username });
         if (existingUser) {
-            return res.status(400).json({ error: "Username already exists" });
+            return res.status(400).json({ error: 'Username already exists' });
         }
-        
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({ username, password: hashedPassword });
         await user.save();
-        res.status(201).json({ message: "User registered successfully" });
+        res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
-        console.error("Registration error:", error);
-        res.status(400).json({ error: "Error registering user" });
+        console.error('Registration error:', error);
+        res.status(400).json({ error: 'Error registering user' });
     }
 });
 
@@ -214,59 +175,23 @@ app.post('/login', async (req, res) => {
     try {
         const user = await User.findOne({ username });
         if (!user || !(await bcrypt.compare(password, user.password))) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return res.status(401).json({ error: 'Invalid credentials' });
         }
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.json({ token, userId: user._id, username: user.username });
     } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ error: "Login failed" });
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Login failed' });
     }
 });
 
-// Middleware to verify JWT token
-const authenticate = async (req, res, next) => {
-    try {
-        const token = req.header('Authorization')?.replace('Bearer ', '');
-        
-        if (!token) {
-            return res.status(401).json({ error: 'Authentication required' });
-        }
-        
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.userId);
-        
-        if (!user) {
-            return res.status(401).json({ error: 'User not found' });
-        }
-        
-        req.user = user;
-        req.token = token;
-        next();
-    } catch (error) {
-        res.status(401).json({ error: 'Please authenticate' });
-    }
-};
-
-// Protected route example
-app.get('/api/user/profile', authenticate, async (req, res) => {
+app.get('/api/user/profile', authenticate, (req, res) => {
     res.json({ user: { id: req.user._id, username: req.user.username } });
 });
 
 studyRoomSocket(io);
 
 app.use('/api/studyrooms', studyRoomRoutes);
-
-// User profile endpoint
-app.get('/api/user/profile', authenticate, (req, res) => {
-    res.json({
-      user: {
-        id: req.user._id,
-        username: req.user.username
-      }
-    });
-  });
-  
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

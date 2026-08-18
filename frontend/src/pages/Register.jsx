@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import './Auth.css';
 
 const Register = () => {
@@ -8,31 +8,62 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [successMessage, setSuccessMessage] = useState(''); 
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleRegister = async () => {
+    const handleRegister = async (e) => {
+        if (e) e.preventDefault();
+        if (!username || !password) {
+            setError('Please provide both username and password.');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
         try {
             await axios.post('http://localhost:5000/register', { username, password });
-            setSuccessMessage("Registration successful! Redirecting to login..."); 
+            setSuccessMessage('Registration successful! Redirecting to login...'); 
             
-            // Redirect to home page after successful registration
             setTimeout(() => {
                 navigate('/login'); 
-            }, 1500);
-        } catch (error) {
-            setError("Registration failed. Please try again.");
+            }, 1200);
+        } catch (err) {
+            setError(err.response?.data?.error || 'Registration failed. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div className='background'>
+        <div className="background">
             <div className="register-form">
-                <h2>Register</h2>
-                <input type="text" placeholder="Username" onChange={(e) => setUsername(e.target.value)} />
-                <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
-                <button onClick={handleRegister}>Sign Up</button>
+                <h2>Join StudySpark</h2>
+                <form onSubmit={handleRegister}>
+                    <input 
+                        type="text" 
+                        placeholder="Username" 
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)} 
+                        disabled={loading}
+                        autoFocus
+                    />
+                    <input 
+                        type="password" 
+                        placeholder="Password" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)} 
+                        disabled={loading}
+                    />
+                    <button type="submit" disabled={loading}>
+                        {loading ? 'Creating account...' : 'Sign Up'}
+                    </button>
+                </form>
                 {successMessage && <p className="success-message">{successMessage}</p>} 
                 {error && <p className="error-message">{error}</p>}
+                <p className="auth-switch-text">
+                    Already have an account? <Link to="/login">Login</Link>
+                </p>
             </div>
         </div>
     );

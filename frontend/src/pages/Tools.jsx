@@ -8,10 +8,9 @@ const Tools = () => {
     const [activeTab, setActiveTab] = useState("flashcards");
 
     return (
-        <div>
-            <div className='header-row'>
-                <h1>Study Tools</h1>
-                <br />
+        <div className="tools-container">
+            <div className="header-row">
+                <h1 className="tools-title">Study Tools</h1>
                 <div className="tab-buttons">
                     <button onClick={() => setActiveTab("flashcards")} className={activeTab === "flashcards" ? "active" : ""}>
                         Flashcards
