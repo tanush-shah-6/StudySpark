@@ -32,23 +32,23 @@ const FeatureSection = () => {
             </div>
             <div className="feature-details">
                 <h2>Boost Your Learning with StudySpark AI</h2>
-                <p>Achieve academic excellence with StudySpark, your all-in-one AI learning companion.</p>
+                <p>Achieve academic excellence with StudySpark, your all-in-one AI learning companion powered by Gemini.</p>
                 <ul>
                     <li>
-                        <h3>AI Models</h3>
-                        <p>Access models like ChatGPT and Gemini for comprehensive support.</p>
+                        <h3>Gemini AI Engine</h3>
+                        <p>Leverage the state-of-the-art Gemini Flash model for rapid, intelligent study generation.</p>
                     </li>
                     <li>
-                        <h3>Study Tools</h3>
-                        <p>Generate Flashcards or Quizzes on a desired topic to aid you further in your learning journey.</p>
+                        <h3>Smart Study Tools</h3>
+                        <p>Generate interactive Flashcards and Quizzes on any topic instantly to master your subjects.</p>
                     </li>
                     <li>
-                        <h3>Collaborative Learning</h3>
-                        <p>Create or Join Study Rooms and Chat with other learners!</p>
+                        <h3>Collaborative Rooms</h3>
+                        <p>Create or join Study Rooms to learn and chat with other students in real-time.</p>
                     </li>
                     <li>
-                        <h3>24/7 AI ChatBot</h3>
-                        <p>Round-the-clock AI assistance for your study needs.</p>
+                        <h3>24/7 AI Assistant</h3>
+                        <p>Round-the-clock instant AI support for your academic questions and doubts.</p>
                     </li>
                 </ul>
             </div>
